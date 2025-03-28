@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="app.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encryption App</title>
+</head>
+<body>
+    <nav class="nav">
+    <h2>Encryption App</h2>
+</nav>
+  <div class="whole">
+
+    <label class="label1" for="algorithm">Choose Algorithm:</label>
+    <select id="algorithm">
+        <option value="otp">One-Time Pad (OTP)</option>
+        <option value="3des">3DES</option>
+        <option value="aes-256-cbc">AES-256-CBC</option>
+    </select>
+
+    <h3 class="encription">Encryption</h3>
+    <input type="text" id="encryptionKey" placeholder="Enter Encryption Key">
+    <input type="text" id="inputText" placeholder="Enter text">
+    <button onclick="encryptText()">Encrypt</button>
+    <p>Encrypted: <span id="encryptedText"></span></p>
+    <button onclick="copyText('encryptedText')">Copy Encryption</button>
+
+    <h3>Decryption</h3>
+    <input type="text" id="decryptionKey" placeholder="Enter Decryption Key">
+    <button onclick="decryptText()">Decrypt</button>
+    <p>Decrypted: <span id="decryptedText"></span></p>
+    <button onclick="copyText('decryptedText')">Copy Decryption</button>
+
+    <script>
+        async function encryptText() {
+            const text = document.getElementById("inputText").value;
+            const algorithm = document.getElementById("algorithm").value;
+            const key = document.getElementById("encryptionKey").value;
+    
+            if (!text || !key) {
+                alert("Please enter text and encryption key.");
+                return;
+            }
+    
+            // Special check for OTP
+            if (algorithm === 'otp' && key.length < text.length) {
+                alert("For OTP, key must be at least as long as the text");
+                return;
+            }
+    
+            try {
+                const res = await fetch("http://localhost:5000/encrypt", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text, algorithm, key })
+                });
+    
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.error || 'Encryption failed');
+                }
+    
+                const data = await res.json();
+                document.getElementById("encryptedText").textContent = data.encrypted;
+                
+                // Store all necessary information
+                sessionStorage.setItem("algorithm", algorithm);
+                sessionStorage.setItem("iv", data.iv || ''); // IV might not exist for OTP
+                sessionStorage.setItem("originalKey", key); // Store the original key
+            } catch (error) {
+                alert("Encryption error: " + error.message);
+            }
+        }
+    
+        async function decryptText() {
+            const decryptionKey = document.getElementById("decryptionKey").value;
+            const encryptedText = document.getElementById("encryptedText").textContent;
+            const algorithm = sessionStorage.getItem("algorithm");
+            const iv = sessionStorage.getItem("iv");
+            const originalKey = sessionStorage.getItem("originalKey");
+    
+            if (!encryptedText || !decryptionKey) {
+                alert("Please enter encrypted text and decryption key.");
+                return;
+            }
+    
+            // Check if decryption key matches original key
+            if (decryptionKey !== originalKey) {
+                alert("Decryption key does not match the encryption key.");
+                return;
+            }
+    
+            try {
+                const res = await fetch("http://localhost:5000/decrypt", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        encryptedText, 
+                        algorithm, 
+                        key: decryptionKey, 
+                        iv: algorithm === 'otp' ? undefined : iv 
+                    })
+                });
+    
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.error || 'Decryption failed');
+                }
+    
+                const data = await res.json();
+                document.getElementById("decryptedText").textContent = data.decrypted;
+            } catch (error) {
+                alert("Decryption error: " + error.message);
+            }
+        }
+    
+        // ... (keep the existing copyText function)
+        function copyText(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+        alert("Element not found!");
+        return;
+    }
+
+    const text = element.textContent;
+    if (!text || text.trim() === "") {
+        alert("Nothing to copy!");
+        return;
+    }
+
+    navigator.clipboard.writeText(text.trim())
+        .then(() => {
+            // Visual feedback
+            const originalText = element.textContent;
+            element.textContent = "Copied!";
+            element.style.color = "green";
+            
+            // Revert after 2 seconds
+            setTimeout(() => {
+                element.textContent = originalText;
+                element.style.color = "";
+            }, 2000);
+        })
+        .catch(err => {
+            console.error("Failed to copy:", err);
+            alert("Failed to copy. Please try again or check browser permissions.");
+            
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert("Text copied using fallback method!");
+            } catch (fallbackErr) {
+                alert("Failed to copy text. Please copy manually.");
+            }
+            document.body.removeChild(textarea);
+        });
+}
+    </script>
+ 
+  </div>
+</body>
+</html>
