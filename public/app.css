@@ -91,3 +91,16 @@ p {
     border-radius: 5px;
     margin-top: 5px;
 }
+#encryptedText{
+    display: block;
+    width: 378px; /* Full width */
+    min-height: 50px; /* Minimum height */
+    max-height: 200px; /* Limit excessive growth */
+    overflow-y: auto; /* Add scrolling if needed */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: #f8f9fa;
+}

@@ -1,3 +1,4 @@
+const fs = require('fs');
 const express = require('express');
 const crypto = require('crypto');
 const cors = require('cors');
@@ -91,50 +92,99 @@ function getKeySize(algorithm) {
         'aes-128-cbc': 16
     }[algorithm] || 32;
 }
+// RSA Encryption
+function rsaEncrypt(text, publicKeyPath) {
+    try {
+        const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
+        const buffer = Buffer.from(text, 'utf8');
+        const encrypted = crypto.publicEncrypt(
+            {
+                key: publicKey,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                oaepHash: 'sha256'
+            },
+            buffer
+        );
+        return encrypted.toString('base64');
+    } catch (error) {
+        throw new Error('RSA encryption failed: ' + error.message);
+    }
+}
 
+// RSA Decryption
+function rsaDecrypt(encryptedText, privateKeyPath) {
+    try {
+        const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+        const buffer = Buffer.from(encryptedText, 'base64');
+        const decrypted = crypto.privateDecrypt(
+            {
+                key: privateKey,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                oaepHash: 'sha256'
+            },
+            buffer
+        );
+        return decrypted.toString('utf8');
+    } catch (error) {
+        throw new Error('RSA decryption failed: ' + error.message);
+    }
+}
 // Encryption Endpoint
 app.post('/encrypt', (req, res) => {
     const { text, algorithm, key } = req.body;
 
-    if (!text || !algorithm || !key) {
-        return res.status(400).json({ error: 'Missing text, algorithm, or key' });
+    if (!text || !algorithm) {
+        return res.status(400).json({ error: 'Missing text or algorithm' });
     }
 
     try {
         let result;
         if (algorithm === 'otp') {
+            if (!key) throw new Error('Missing key for OTP');
             result = { encrypted: otpEncrypt(text, key) };
         } else if (algorithm === '3des') {
+            if (!key) throw new Error('Missing key for 3DES');
             result = des3Encrypt(text, key);
+        } else if (algorithm === 'rsa') {
+            // For RSA, we don't need the key from client as we use server's public key
+            result = { encrypted: rsaEncrypt(text, './public_key.pem') };
         } else {
+            // Assume it's an AES algorithm
+            if (!key) throw new Error('Missing key for AES');
             result = aesEncrypt(text, key, algorithm);
         }
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: 'Encryption failed', details: error.message });
+        res.status(500).json({ error: error.message });
     }
 });
-
 // Decryption Endpoint
 app.post('/decrypt', (req, res) => {
     const { encryptedText, algorithm, key, iv } = req.body;
 
-    if (!encryptedText || !algorithm || !key) {
-        return res.status(400).json({ error: 'Missing encrypted text, algorithm, or key' });
+    if (!encryptedText || !algorithm) {
+        return res.status(400).json({ error: 'Missing encrypted text or algorithm' });
     }
 
     try {
         let decrypted;
         if (algorithm === 'otp') {
+            if (!key) throw new Error('Missing key for OTP');
             decrypted = otpDecrypt(encryptedText, key);
         } else if (algorithm === '3des') {
+            if (!key || !iv) throw new Error('Missing key or IV for 3DES');
             decrypted = des3Decrypt(encryptedText, key, iv);
+        } else if (algorithm === 'rsa') {
+            // For RSA, we use server's private key
+            decrypted = rsaDecrypt(encryptedText, './private_key.pem');
         } else {
+            // Assume it's an AES algorithm
+            if (!key || !iv) throw new Error('Missing key or IV for AES');
             decrypted = aesDecrypt(encryptedText, key, algorithm, iv);
         }
         res.json({ decrypted });
     } catch (error) {
-        res.status(500).json({ error: 'Decryption failed. Wrong key or algorithm?', details: error.message });
+        res.status(500).json({ error: error.message });
     }
 });
 

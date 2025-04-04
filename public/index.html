@@ -17,13 +17,15 @@
         <option value="otp">One-Time Pad (OTP)</option>
         <option value="3des">3DES</option>
         <option value="aes-256-cbc">AES-256-CBC</option>
+        <option value="rsa">RSA</option>
     </select>
 
     <h3 class="encription">Encryption</h3>
     <input type="text" id="encryptionKey" placeholder="Enter Encryption Key">
     <input type="text" id="inputText" placeholder="Enter text">
     <button onclick="encryptText()">Encrypt</button>
-    <p>Encrypted: <span id="encryptedText"></span></p>
+    <p>Encrypted:</p>
+    <textarea id="encryptedText" readonly></textarea>
     <button onclick="copyText('encryptedText')">Copy Encryption</button>
 
     <h3>Decryption</h3>
@@ -33,88 +35,132 @@
     <button onclick="copyText('decryptedText')">Copy Decryption</button>
 
     <script>
-        async function encryptText() {
-            const text = document.getElementById("inputText").value;
-            const algorithm = document.getElementById("algorithm").value;
-            const key = document.getElementById("encryptionKey").value;
+// Add this after your algorithm select element
+document.getElementById('algorithm').addEventListener('change', function() {
+    const algorithm = this.value;
+    const keyInputs = document.querySelectorAll('#encryptionKey, #decryptionKey');
+    sessionStorage.removeItem("algorithm");
+    sessionStorage.removeItem("iv");
+    sessionStorage.removeItem("originalKey");
+    // Hide key inputs for RSA, show for others
+    keyInputs.forEach(input => {
+        input.style.display = algorithm === 'rsa' ? 'none' : 'block';
+        input.required = algorithm !== 'rsa';
+    });
     
-            if (!text || !key) {
-                alert("Please enter text and encryption key.");
-                return;
-            }
-    
-            // Special check for OTP
-            if (algorithm === 'otp' && key.length < text.length) {
-                alert("For OTP, key must be at least as long as the text");
-                return;
-            }
-    
-            try {
-                const res = await fetch("http://localhost:5000/encrypt", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text, algorithm, key })
-                });
-    
-                if (!res.ok) {
-                    const error = await res.json();
-                    throw new Error(error.error || 'Encryption failed');
-                }
-    
-                const data = await res.json();
-                document.getElementById("encryptedText").textContent = data.encrypted;
-                
-                // Store all necessary information
-                sessionStorage.setItem("algorithm", algorithm);
-                sessionStorage.setItem("iv", data.iv || ''); // IV might not exist for OTP
-                sessionStorage.setItem("originalKey", key); // Store the original key
-            } catch (error) {
-                alert("Encryption error: " + error.message);
-            }
+    // Update labels if needed
+    document.querySelectorAll('label[for="encryptionKey"], label[for="decryptionKey"]')
+        .forEach(label => {
+            label.style.display = algorithm === 'rsa' ? 'none' : 'block';
+        });
+});
+async function encryptText() {
+    const text = document.getElementById("inputText").value;
+    const algorithm = document.getElementById("algorithm").value;
+    const key = document.getElementById("encryptionKey").value;
+
+    if (!text) {
+        alert("Please enter text.");
+        return;
+    }
+
+    // Algorithm-specific validations
+    if (algorithm === 'otp') {
+        if (!key) {
+            alert("For OTP, please enter encryption key");
+            return;
         }
-    
-        async function decryptText() {
-            const decryptionKey = document.getElementById("decryptionKey").value;
-            const encryptedText = document.getElementById("encryptedText").textContent;
-            const algorithm = sessionStorage.getItem("algorithm");
-            const iv = sessionStorage.getItem("iv");
-            const originalKey = sessionStorage.getItem("originalKey");
-    
-            if (!encryptedText || !decryptionKey) {
-                alert("Please enter encrypted text and decryption key.");
-                return;
-            }
-    
-            // Check if decryption key matches original key
-            if (decryptionKey !== originalKey) {
-                alert("Decryption key does not match the encryption key.");
-                return;
-            }
-    
-            try {
-                const res = await fetch("http://localhost:5000/decrypt", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        encryptedText, 
-                        algorithm, 
-                        key: decryptionKey, 
-                        iv: algorithm === 'otp' ? undefined : iv 
-                    })
-                });
-    
-                if (!res.ok) {
-                    const error = await res.json();
-                    throw new Error(error.error || 'Decryption failed');
-                }
-    
-                const data = await res.json();
-                document.getElementById("decryptedText").textContent = data.decrypted;
-            } catch (error) {
-                alert("Decryption error: " + error.message);
-            }
+        if (key.length < text.length) {
+            alert("For OTP, key must be at least as long as the text");
+            return;
         }
-    
+    } else if (algorithm !== 'rsa' && !key) {
+        // Only validate key for non-RSA algorithms
+        alert("Please enter encryption key.");
+        return;
+    }
+
+ 
+    // Rest of the function remains the same...
+    try {
+        const res = await fetch("http://localhost:5000/encrypt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                text, 
+                algorithm, 
+                key: algorithm === 'rsa' ? undefined : key 
+            })
+        });
+
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Encryption failed');
+        }
+
+        const data = await res.json();
+        document.getElementById("encryptedText").textContent = data.encrypted;
+        
+        // Store all necessary information (not needed for RSA)
+  
+            sessionStorage.setItem("algorithm", algorithm);
+            if (algorithm !== 'rsa') {
+            sessionStorage.setItem("iv", data.iv || '');
+            sessionStorage.setItem("originalKey", key);
+        }
+    } catch (error) {
+        alert("Encryption error: " + error.message);
+    }
+}
+async function decryptText() {
+    const decryptionKey = document.getElementById("decryptionKey").value;
+    const encryptedText = document.getElementById("encryptedText").textContent;
+    const algorithm = sessionStorage.getItem("algorithm") || document.getElementById("algorithm").value;
+    const iv = sessionStorage.getItem("iv");
+    const originalKey = sessionStorage.getItem("originalKey");
+
+    if (!encryptedText) {
+        alert("Please encrypt text first.");
+        return;
+    }
+
+    // Only validate key for non-RSA algorithms
+    if (algorithm !== 'rsa') {
+        if (!decryptionKey) {
+            alert("Please enter decryption key.");
+            return;
+        }
+        if (algorithm === 'otp' && decryptionKey !== originalKey) {
+            alert("Decryption key does not match the encryption key.");
+            return;
+        }
+    }
+
+
+    // Rest of the function remains the same...
+    try {
+        const res = await fetch("http://localhost:5000/decrypt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                encryptedText, 
+                algorithm, 
+                key: algorithm === 'rsa' ? undefined : decryptionKey, 
+                iv: algorithm === 'rsa' ? undefined : iv 
+            })
+        });
+
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Decryption failed');
+        }
+
+        const data = await res.json();
+        document.getElementById("decryptedText").textContent = data.decrypted;
+    } catch (error) {
+        alert("Decryption error: " + error.message);
+    }
+}
         // ... (keep the existing copyText function)
         function copyText(elementId) {
     const element = document.getElementById(elementId);
