@@ -149,7 +149,7 @@ app.post('/encrypt', (req, res) => {
             // For RSA, we don't need the key from client as we use server's public key
             result = { encrypted: rsaEncrypt(text, './public_key.pem') };
         } else {
-            // Assume it's an AES algorithm
+
             if (!key) throw new Error('Missing key for AES');
             result = aesEncrypt(text, key, algorithm);
         }
@@ -178,7 +178,6 @@ app.post('/decrypt', (req, res) => {
             // For RSA, we use server's private key
             decrypted = rsaDecrypt(encryptedText, './private_key.pem');
         } else {
-            // Assume it's an AES algorithm
             if (!key || !iv) throw new Error('Missing key or IV for AES');
             decrypted = aesDecrypt(encryptedText, key, algorithm, iv);
         }

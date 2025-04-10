@@ -35,20 +35,19 @@
     <button onclick="copyText('decryptedText')">Copy Decryption</button>
 
     <script>
-// Add this after your algorithm select element
 document.getElementById('algorithm').addEventListener('change', function() {
     const algorithm = this.value;
     const keyInputs = document.querySelectorAll('#encryptionKey, #decryptionKey');
     sessionStorage.removeItem("algorithm");
     sessionStorage.removeItem("iv");
     sessionStorage.removeItem("originalKey");
-    // Hide key inputs for RSA, show for others
+
     keyInputs.forEach(input => {
         input.style.display = algorithm === 'rsa' ? 'none' : 'block';
         input.required = algorithm !== 'rsa';
     });
     
-    // Update labels if needed
+
     document.querySelectorAll('label[for="encryptionKey"], label[for="decryptionKey"]')
         .forEach(label => {
             label.style.display = algorithm === 'rsa' ? 'none' : 'block';
@@ -81,7 +80,7 @@ async function encryptText() {
     }
 
  
-    // Rest of the function remains the same...
+
     try {
         const res = await fetch("http://localhost:5000/encrypt", {
             method: "POST",
@@ -101,7 +100,7 @@ async function encryptText() {
         const data = await res.json();
         document.getElementById("encryptedText").textContent = data.encrypted;
         
-        // Store all necessary information (not needed for RSA)
+
   
             sessionStorage.setItem("algorithm", algorithm);
             if (algorithm !== 'rsa') {
@@ -137,7 +136,6 @@ async function decryptText() {
     }
 
 
-    // Rest of the function remains the same...
     try {
         const res = await fetch("http://localhost:5000/decrypt", {
             method: "POST",
@@ -161,7 +159,7 @@ async function decryptText() {
         alert("Decryption error: " + error.message);
     }
 }
-        // ... (keep the existing copyText function)
+
         function copyText(elementId) {
     const element = document.getElementById(elementId);
     if (!element) {

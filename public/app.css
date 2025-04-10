@@ -1,106 +1,197 @@
+/* Modern Variables */
+:root {
+  --primary: #007bff;
+  --primary-dark:#007bff;
+  --secondary: #f0f4f8;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --success: #10b981;
+  --error: #ef4444;
+  --border: #e2e8f0;
+  --radius: 8px;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
+  background-color: #f8fafc;
+  color: var(--text);
+  line-height: 1.6;
 }
 
+/* Navigation */
 .nav {
-    background-color: #fff;
-    padding: 15px;
-    width: 100%;
-    text-align: center;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
+  background-color: white;
+  height: 79px;
+  color: #007bff;
+  padding: 1rem 2rem;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
+.nav h2 {
+  font-size: 25px;
+  font-weight: 690;
+  letter-spacing: 0.5px;
+}
 
+/* Main Container */
 .whole {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-    width: 400px;
-    text-align: center;
-    margin-top: 250px;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
-h3 {
-    color: #333;
+/* Form Elements */
+label {
+  font-size: 19px;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 00;
+  color: var(--text);
 }
 
-input, select {
-    width: calc(100% - 20px);
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+select, input, textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: white;
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+select:focus, input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
 }
 
 button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 10px;
+  background-color: var(--primary);
+  width:100%;
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 button:hover {
-    background-color: #0056b3;
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
 }
 
+button:active {
+  transform: translateY(0);
+}
+
+/* Section Headings */
+h3 {
+  margin: 2rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--secondary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+h3.encription {
+  margin-top: 1.5rem;
+}
+
+/* Copy Buttons */
+button[onclick*="copyText"] {
+  background-color: var(--secondary);
+  color: var(--text);
+
+  width:100% ;
+}
+
+button[onclick*="copyText"]:hover {
+  background-color: #e2e8f0;
+}
+
+/* Results Display */
 p {
-    background-color: #f1f3f4;
-    padding: 10px;
-    border-radius: 5px;
-    display: inline-block;
-    width: calc(100% - 20px);
-    text-align: center;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
 }
 
-.copy-btn {
-    background-color: #6c757d;
-    margin-top: 5px;
+#decryptedText {
+  display: inline-block;
+  width:100%;
+  height:50px;
+  padding: 0.5rem;
+  background-color: var(--secondary);
+  border-radius: var(--radius);
+  min-height: 1.5rem;
+  min-width: 100px;
 }
 
-.copy-btn:hover {
-    background-color: #5a6268;
+/* Algorithm Selection */
+#algorithm {
+  background-color: white;
+  cursor: pointer;
 }
 
-.recent-activity {
-    margin-top: 20px;
-    text-align: left;
-    font-size: 14px;
-    color: #555;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .whole {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  button {
+    width: 100%;
+  }
 }
 
-.recent-activity div {
-    background-color: #e9ecef;
-    padding: 10px;
-    border-radius: 5px;
-    margin-top: 5px;
+/* Animation for Copy Feedback */
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
-#encryptedText{
-    display: block;
-    width: 378px; /* Full width */
-    min-height: 50px; /* Minimum height */
-    max-height: 200px; /* Limit excessive growth */
-    overflow-y: auto; /* Add scrolling if needed */
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background: #f8f9fa;
+
+.copied {
+  animation: fadeIn 0.3s ease-in-out;
+  color: var(--success) !important;
+}
+
+/* Container for button groups */
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .button-group {
+    flex-direction: column;
+  }
 }
